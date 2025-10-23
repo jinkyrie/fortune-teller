@@ -1,13 +1,13 @@
 {
   "name": "fortune-teller",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
     "dev:full": "npm run db:generate && npm run db:push && npm run dev",
     "db:generate": "npx prisma generate",
     "db:push": "npx prisma db push",
-    "build": "rm -rf node_modules/.prisma && rm -rf .next && npx prisma generate && npx prisma db push && next build",
+    "build": "rm -rf node_modules/.prisma && rm -rf .next && rm -rf node_modules/.cache && npx prisma generate && npx prisma db push && next build",
     "build:prod": "node build-prod.js",
     "build:hostinger": "node build-hostinger.js",
     "build:dist": "node build-dist.js",

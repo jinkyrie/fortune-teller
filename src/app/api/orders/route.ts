@@ -114,7 +114,7 @@ export async function POST(request: NextRequest) {
     // Add to queue and get position
     let queuePosition;
     try {
-      // First, update all existing queue positions
+      // First, update all existing queue positions (using static imports)
       await updateQueuePositions();
       
       // Then get the position for this order
