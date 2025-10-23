@@ -20,6 +20,9 @@ const cormorant = Cormorant_Garamond({
 export const metadata: Metadata = {
   title: "KahveYolu - Mystical Coffee Readings",
   description: "Discover your destiny through the ancient art of coffee cup reading. Premium mystical experience for women seeking guidance.",
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({
