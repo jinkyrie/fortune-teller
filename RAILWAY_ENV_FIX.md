@@ -9,7 +9,7 @@ The build is failing because these environment variables are missing in Railway:
 ```
 # Database (Railway auto-provides these)
 DATABASE_URL=${{DATABASE_URL}}
-DIRECT_URL=${{DATABASE_PUBLIC_URL}}
+DATABASE_PUBLIC_URL=${{DATABASE_PUBLIC_URL}}
 
 # Authentication (Get from Clerk dashboard)
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_live_...
@@ -40,7 +40,7 @@ NEXT_PUBLIC_BASE_URL=https://your-app.railway.app
 ## ⚠️ **Important Notes:**
 
 - **DATABASE_URL**: Railway automatically provides this when you add PostgreSQL
-- **DIRECT_URL**: Set to `${{DATABASE_PUBLIC_URL}}` (Railway's direct connection)
+- **DATABASE_PUBLIC_URL**: Railway automatically provides this (Railway's direct connection)
 - **Clerk Keys**: Use production keys (`pk_live_` not `pk_test_`)
 - **All other variables**: Get from respective service dashboards
 
