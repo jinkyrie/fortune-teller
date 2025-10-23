@@ -100,6 +100,7 @@ export class CleanupService {
         }
       }).catch((error) => {
         console.log('💥 Database connection error:', error.message);
+        console.log('🔍 Error details:', error);
         return [];
       });
 

@@ -1,4 +1,5 @@
 import BackgroundServices from './background-services';
+import { checkDatabaseHealth, initializeDatabase } from './db-health-check';
 
 // Global variable to track if services are started
 let servicesStarted = false;
@@ -11,6 +12,16 @@ export async function startBackgroundServices() {
 
   try {
     console.log('🚀 Initializing background services...');
+    
+    // Check database health first
+    const dbHealthy = await checkDatabaseHealth();
+    if (!dbHealthy) {
+      console.log('⚠️ Database not healthy, skipping background services');
+      return;
+    }
+    
+    // Initialize database tables
+    await initializeDatabase();
     
     const services = BackgroundServices.getInstance();
     await services.startAll();
