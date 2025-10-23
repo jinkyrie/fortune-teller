@@ -8,7 +8,7 @@
     "db:generate": "npx prisma generate",
     "db:push": "npx prisma db push",
     "build": "npx prisma generate && next build",
-    "build:railway": "npx prisma generate && next build",
+    "build:railway": "node railway-build.js",
     "build:prod": "node build-prod.js",
     "build:hostinger": "node build-hostinger.js",
     "build:dist": "node build-dist.js",

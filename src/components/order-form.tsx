@@ -14,10 +14,9 @@ import PaymentSelector from "./payment-selector";
 import AnimatedCoffeeCup from "./animated-coffee-cup";
 
 export default function OrderForm() {
-  const { user, isLoaded } = useUser();
-  
   // Check if we're in build mode (no Clerk available)
   const isBuildMode = typeof window === 'undefined' || !process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY === 'pk_test_...';
+  
   const [formData, setFormData] = useState({
     fullName: "",
     age: "",
@@ -38,6 +37,9 @@ export default function OrderForm() {
       </div>
     );
   }
+
+  // Only use Clerk hooks when not in build mode
+  const { user, isLoaded } = useUser();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadedPhotoUrls, setUploadedPhotoUrls] = useState<string[]>([]);
