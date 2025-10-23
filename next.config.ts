@@ -16,6 +16,10 @@ const nextConfig: NextConfig = {
     unoptimized: false,
     formats: ['image/webp', 'image/avif'],
   },
+  // Force clean builds
+  experimental: {
+    forceSwcTransforms: true,
+  },
 };
 
 export default nextConfig;
