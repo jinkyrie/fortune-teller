@@ -1,0 +1,56 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  fullName  String
+  role      String   @default("user") // user, admin
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  orders    Order[]
+}
+
+model Order {
+  id                String   @id @default(cuid())
+  userId            String?
+  fullName          String
+  age               Int
+  maritalStatus     String
+  gender            String
+  email             String
+  photos            String   // JSON string of Cloudinary URLs
+  paymentStatus       String   @default("pending")
+  orderStatus       String   @default("queued") // queued, in_progress, completed, cancelled
+  queuePosition     Int?     // Position in queue (1-based)
+  estimatedWaitTime Int?     // Estimated wait time in minutes
+  createdAt         DateTime @default(now())
+  startedAt         DateTime? // When fortune teller started working on it
+  completedAt       DateTime?
+  
+  // Payment fields
+  paymentProvider   String?  // iyzico, paytr
+  paymentToken      String?  // Payment provider token
+  paymentUrl        String?  // Payment URL
+  paymentId         String?  // Payment ID from provider
+  paidAmount        Float?   // Amount paid
+  paymentCurrency   String?  // Currency used
+  installmentCount  Int?     // Number of installments
+  
+  // Reading content
+  readingContent    String?  // The actual fortune reading content
+  readingNotes      String?  // Internal notes from fortune teller
+  
+  user              User?    @relation(fields: [userId], references: [id])
+}

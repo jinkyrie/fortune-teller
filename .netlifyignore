@@ -1,0 +1,52 @@
+# Development files
+node_modules/
+.next/cache/
+.next/static/
+.next/server/chunks/
+.next/server/pages/
+.next/server/app/
+
+# Development scripts
+scripts/
+*.md
+*.bat
+*.ps1
+*.sh
+
+# Test files
+test-*
+*test*
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# Environment files
+.env*
+!.env.example
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Build artifacts we don't need
+coverage/
+.nyc_output/
+dist/
+build/
+
+# Keep only essential files for production
+!.next/standalone/
+!.next/static/
+!.next/server/

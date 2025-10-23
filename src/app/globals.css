@@ -1,0 +1,84 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --background: #0A0B1A;
+    --foreground: #F8F6F0;
+    --primary: #D4AF37;
+    --secondary: #E6D7C3;
+    --accent: #6B46C1;
+    --muted: #A8A8A8;
+    --card: rgba(15,15,35,0.8);
+    --border: rgba(212,175,55,0.2);
+    --radius: 1rem;
+  }
+
+  body {
+    @apply bg-[var(--background)] text-[var(--foreground)];
+    font-family: var(--font-inter), sans-serif;
+  }
+}
+
+@layer components {
+  .btn-gold {
+    @apply bg-[var(--primary)] text-black font-semibold rounded-xl py-2 px-5 transition-all hover:shadow-[0_0_15px_var(--primary)];
+  }
+
+  .glass-card {
+    @apply bg-[var(--card)] backdrop-blur-lg border border-[var(--border)] rounded-2xl p-6;
+  }
+
+  .celestial-gradient {
+    background: linear-gradient(135deg, #0A0B1A 0%, #1A1B3A 25%, #2D1B69 50%, #0A0B1A 100%);
+    position: relative;
+  }
+
+  .celestial-gradient::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at 20% 80%, rgba(107,70,193,0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(212,175,55,0.1) 0%, transparent 50%);
+    pointer-events: none;
+  }
+
+  .mystic-glow {
+    box-shadow: 0 0 25px rgba(212, 175, 55, 0.4), 0 0 50px rgba(107, 70, 193, 0.2);
+  }
+
+  .font-cormorant {
+    font-family: var(--font-cormorant), serif;
+  }
+
+  /* Animated Coffee Cup Styles */
+  .coffee-cup {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: transparent;
+    position: relative;
+    filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.4));
+  }
+
+  .coffee-cup svg {
+    animation: shimmer 4s ease-in-out infinite;
+  }
+
+  @keyframes shimmer {
+    0% {
+      filter: drop-shadow(0 0 5px rgba(203, 163, 92, 0.3))
+              drop-shadow(0 0 10px rgba(203, 163, 92, 0.2));
+    }
+    50% {
+      filter: drop-shadow(0 0 12px rgba(203, 163, 92, 0.6))
+              drop-shadow(0 0 20px rgba(203, 163, 92, 0.4));
+    }
+    100% {
+      filter: drop-shadow(0 0 5px rgba(203, 163, 92, 0.3))
+              drop-shadow(0 0 10px rgba(203, 163, 92, 0.2));
+    }
+  }
+}

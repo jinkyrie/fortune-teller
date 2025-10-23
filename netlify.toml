@@ -1,0 +1,23 @@
+[build]
+  command = "npm run build:prod"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "22.21.0"
+  SECRETS_SCAN_ENABLED = "false"
+
+# Environment variables that need to be set in Netlify dashboard
+# DATABASE_URL - Set to your database URL (e.g., PostgreSQL from Netlify Postgres)
+# NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY - Your Clerk publishable key
+# CLERK_SECRET_KEY - Your Clerk secret key
+# SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, FROM_EMAIL - Email configuration
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
