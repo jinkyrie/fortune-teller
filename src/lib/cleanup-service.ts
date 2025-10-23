@@ -28,6 +28,12 @@ export class CleanupService {
       return;
     }
 
+    // Check if DATABASE_URL is available
+    if (!process.env.DATABASE_URL) {
+      console.log('⚠️ DATABASE_URL not found, skipping cleanup service');
+      return;
+    }
+
     console.log(`🚀 Starting automated cleanup service...`);
     console.log(`📅 Will delete images older than ${daysOld} days`);
     console.log(`⏰ Running every ${intervalHours} hours`);
@@ -90,6 +96,9 @@ export class CleanupService {
           photos: true,
           completedAt: true
         }
+      }).catch((error) => {
+        console.log('💥 Database connection error:', error.message);
+        return [];
       });
 
       console.log(`📋 Found ${oldOrders.length} old completed orders`);
