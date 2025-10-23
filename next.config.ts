@@ -16,10 +16,7 @@ const nextConfig: NextConfig = {
     unoptimized: false,
     formats: ['image/webp', 'image/avif'],
   },
-  // Force clean builds
-  experimental: {
-    forceSwcTransforms: true,
-  },
+  // Force clean builds - use webpack instead of turbopack for better compatibility
 };
 
 export default nextConfig;
