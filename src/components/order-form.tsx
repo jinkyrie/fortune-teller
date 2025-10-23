@@ -15,6 +15,9 @@ import AnimatedCoffeeCup from "./animated-coffee-cup";
 
 export default function OrderForm() {
   const { user, isLoaded } = useUser();
+  
+  // Check if we're in build mode (no Clerk available)
+  const isBuildMode = typeof window === 'undefined' || !process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY === 'pk_test_...';
   const [formData, setFormData] = useState({
     fullName: "",
     age: "",
@@ -23,6 +26,18 @@ export default function OrderForm() {
     email: "",
     photos: [] as File[],
   });
+
+  // Build-time fallback
+  if (isBuildMode) {
+    return (
+      <div className="min-h-screen celestial-gradient flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-[var(--primary)] mb-4">Order Form</h1>
+          <p className="text-[var(--muted)]">Authentication required</p>
+        </div>
+      </div>
+    );
+  }
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadedPhotoUrls, setUploadedPhotoUrls] = useState<string[]>([]);
