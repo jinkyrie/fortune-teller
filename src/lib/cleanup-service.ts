@@ -34,6 +34,8 @@ export class CleanupService {
       return;
     }
 
+    console.log('🔍 DATABASE_URL found:', process.env.DATABASE_URL.substring(0, 20) + '...');
+
     console.log(`🚀 Starting automated cleanup service...`);
     console.log(`📅 Will delete images older than ${daysOld} days`);
     console.log(`⏰ Running every ${intervalHours} hours`);
