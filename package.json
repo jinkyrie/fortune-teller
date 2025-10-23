@@ -7,7 +7,8 @@
     "dev:full": "npm run db:generate && npm run db:push && npm run dev",
     "db:generate": "npx prisma generate",
     "db:push": "npx prisma db push",
-    "build": "rm -rf node_modules/.prisma && rm -rf .next && rm -rf node_modules/.cache && npx prisma generate && npx prisma db push && next build",
+    "build": "npx prisma generate && next build",
+    "build:railway": "npx prisma generate && next build",
     "build:prod": "node build-prod.js",
     "build:hostinger": "node build-hostinger.js",
     "build:dist": "node build-dist.js",
@@ -15,7 +16,9 @@
     "lint": "eslint",
     "cleanup": "node scripts/cleanup-images.js",
     "validate-db": "node validate-db-url.js",
-    "validate-netlify": "node validate-netlify-config.js"
+    "validate-netlify": "node validate-netlify-config.js",
+    "railway:setup": "node railway-setup.js",
+    "railway:deploy": "npm run railway:setup && npm run build"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.33.7",

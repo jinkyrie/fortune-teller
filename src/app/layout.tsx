@@ -30,15 +30,31 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+  
+  // Only wrap with ClerkProvider if we have a valid publishable key
+  if (publishableKey && publishableKey !== 'pk_test_...') {
+    return (
+      <ClerkProvider publishableKey={publishableKey}>
+        <html lang="en">
+          <body
+            className={`${inter.variable} ${cormorant.variable} antialiased`}
+          >
+            {children}
+          </body>
+        </html>
+      </ClerkProvider>
+    );
+  }
+  
+  // Fallback for build time or missing keys
   return (
-    <ClerkProvider>
-      <html lang="en">
-        <body
-          className={`${inter.variable} ${cormorant.variable} antialiased`}
-        >
-          {children}
-        </body>
-      </html>
-    </ClerkProvider>
+    <html lang="en">
+      <body
+        className={`${inter.variable} ${cormorant.variable} antialiased`}
+      >
+        {children}
+      </body>
+    </html>
   );
 }

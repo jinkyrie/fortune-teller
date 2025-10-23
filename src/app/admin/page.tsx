@@ -45,6 +45,21 @@ export default function AdminPage() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
 
+  // Check if we're in build mode (no Clerk available)
+  const isBuildMode = typeof window === 'undefined' || !process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY === 'pk_test_...';
+
+  // Build-time fallback
+  if (isBuildMode) {
+    return (
+      <div className="min-h-screen celestial-gradient flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-[var(--primary)] mb-4">Admin Panel</h1>
+          <p className="text-[var(--muted)]">Authentication required</p>
+        </div>
+      </div>
+    );
+  }
+
   // Check authentication (allow any authenticated user for testing)
   useEffect(() => {
     if (!isLoaded) return; // Still loading
