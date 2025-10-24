@@ -73,13 +73,13 @@ export async function POST() {
     const authHeader = Buffer.from(authString).toString('base64');
 
     console.log('📤 Sending request to:', apiUrl);
-    console.log('🔑 Auth header format:', `IYZWS ${authHeader.substring(0, 20)}...`);
+    console.log('🔑 Auth header format:', `Basic ${authHeader.substring(0, 20)}...`);
 
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `IYZWS ${authHeader}`
+        'Authorization': `Basic ${authHeader}`
       },
       body: JSON.stringify(testRequest)
     });

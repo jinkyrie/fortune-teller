@@ -104,16 +104,22 @@ export async function POST(request: NextRequest) {
     console.log(`🔗 Using Iyzico ${isSandbox ? 'Sandbox' : 'Production'} API: ${apiUrl}`);
     console.log('📤 Iyzico Request:', JSON.stringify(iyzicoRequest, null, 2));
 
-    // Create authorization header for Iyzico
+    // Create authorization header for Iyzico (Basic Auth format)
     const authString = `${process.env.IYZICO_API_KEY}:${process.env.IYZICO_SECRET_KEY}`;
     const authHeader = Buffer.from(authString).toString('base64');
+
+    console.log('🔑 Auth Debug:', {
+      apiKey: process.env.IYZICO_API_KEY?.substring(0, 10) + '...',
+      secretKey: process.env.IYZICO_SECRET_KEY?.substring(0, 10) + '...',
+      authHeaderLength: authHeader.length
+    });
 
     // Create iyzilink product
     const iyzicoResponse = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `IYZWS ${authHeader}`
+        'Authorization': `Basic ${authHeader}`
       },
       body: JSON.stringify(iyzicoRequest)
     });
