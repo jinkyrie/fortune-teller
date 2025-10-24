@@ -1,4 +1,5 @@
 import jsPDF from 'jspdf';
+import { addLogoToPDF } from './logo-utils';
 
 export interface ReadingPDFData {
   customerName: string;
@@ -31,10 +32,21 @@ export function generateReadingPDF(data: ReadingPDFData): jsPDF {
   
   // 1. HEADER / COVER PAGE
   // Logo & Brand Name - Centered
-  pdf.setTextColor(gold);
-  pdf.setFontSize(20);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('☕ KahveYolu', pageWidth / 2, yPosition, { align: 'center' });
+  const logoWidth = 80;
+  const logoHeight = 25;
+  const logoX = (pageWidth - logoWidth) / 2;
+  const logoY = yPosition - 10;
+  
+  // Try to add the actual logo image
+  const logoAdded = addLogoToPDF(pdf, logoX, logoY, logoWidth, logoHeight);
+  
+  if (!logoAdded) {
+    // Fallback to text logo if image fails
+    pdf.setTextColor(gold);
+    pdf.setFontSize(20);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('☕ KahveYolu', pageWidth / 2, yPosition, { align: 'center' });
+  }
   
   yPosition += 30;
   
@@ -116,10 +128,20 @@ export function generateReadingPDF(data: ReadingPDFData): jsPDF {
   const footerY = pageHeight - 25;
   
   // Footer with logo
-  pdf.setTextColor(gold);
-  pdf.setFontSize(9);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('☕ KahveYolu', margin, footerY);
+  const footerLogoWidth = 40;
+  const footerLogoHeight = 12;
+  const footerLogoX = margin;
+  const footerLogoY = footerY - 8;
+  
+  const footerLogoAdded = addLogoToPDF(pdf, footerLogoX, footerLogoY, footerLogoWidth, footerLogoHeight);
+  
+  if (!footerLogoAdded) {
+    // Fallback to text logo if image fails
+    pdf.setTextColor(gold);
+    pdf.setFontSize(9);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('☕ KahveYolu', margin, footerY);
+  }
   
   // Copyright
   pdf.setTextColor(lightGray);
