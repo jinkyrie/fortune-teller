@@ -33,24 +33,64 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Iyzico iyzilink API integration
+    // Iyzico Pay with Iyzico API integration
+    const price = process.env.PAYMENT_AMOUNT || '50.00';
     const iyzicoRequest = {
       locale: 'tr',
       conversationId: orderId,
-      currencyCode: 'TRY',
-      name: `Fortune Reading - ${order.fullName}`,
-      description: `Personalized fortune reading for ${order.fullName}`,
-      price: process.env.PAYMENT_AMOUNT || '50.00',
-      stockEnabled: false,
-      installmentRequested: 'false',
-      addressIgnorable: 'true'
+      price: price,
+      paidPrice: price,
+      currency: 'TRY',
+      installment: '1',
+      paymentChannel: 'WEB',
+      paymentGroup: 'PRODUCT',
+      callbackUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/payment/success`,
+      enabledInstallments: ['2', '3', '6', '9'],
+      buyer: {
+        id: order.email,
+        name: order.fullName,
+        surname: order.fullName,
+        gsmNumber: '+905551234567',
+        email: order.email,
+        identityNumber: '11111111111',
+        lastLoginDate: new Date().toISOString().split('T')[0] + ' 10:30:00',
+        registrationDate: new Date().toISOString().split('T')[0] + ' 10:30:00',
+        registrationAddress: 'Test Address',
+        ip: '127.0.0.1',
+        city: 'Istanbul',
+        country: 'Turkey',
+        zipCode: '34000'
+      },
+      shippingAddress: {
+        contactName: order.fullName,
+        city: 'Istanbul',
+        country: 'Turkey',
+        address: 'Test Address',
+        zipCode: '34000'
+      },
+      billingAddress: {
+        contactName: order.fullName,
+        city: 'Istanbul',
+        country: 'Turkey',
+        address: 'Test Address',
+        zipCode: '34000'
+      },
+      basketItems: [
+        {
+          id: orderId,
+          name: 'Fortune Reading',
+          category1: 'Services',
+          itemType: 'VIRTUAL',
+          price: price
+        }
+      ]
     };
 
     // Determine API endpoint based on sandbox mode
     const isSandbox = process.env.IYZICO_SANDBOX_MODE === 'true';
     const apiUrl = isSandbox 
-      ? 'https://sandbox-api.iyzipay.com/v2/iyzilink/products'
-      : 'https://api.iyzipay.com/v2/iyzilink/products';
+      ? 'https://sandbox-api.iyzipay.com/v2/payment/iyzipos/checkoutform/initialize/auth'
+      : 'https://api.iyzipay.com/v2/payment/iyzipos/checkoutform/initialize/auth';
 
     console.log(`🔗 Using Iyzico ${isSandbox ? 'Sandbox' : 'Production'} API: ${apiUrl}`);
 
@@ -76,7 +116,7 @@ export async function POST(request: NextRequest) {
       await prisma.order.update({
         where: { id: orderId },
         data: {
-          paymentUrl: iyzicoData.url,
+          paymentUrl: iyzicoData.paymentPageUrl,
           paymentToken: iyzicoData.token,
           paymentProvider: 'iyzico'
         }
@@ -84,7 +124,7 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json({
         success: true,
-        paymentUrl: iyzicoData.url,
+        paymentUrl: iyzicoData.paymentPageUrl,
         token: iyzicoData.token
       });
     } else {

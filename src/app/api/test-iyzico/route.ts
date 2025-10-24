@@ -2,17 +2,56 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
   try {
-    // Test Iyzico API connection and create a test iyzilink
+    // Test Iyzico Pay with Iyzico API
     const testRequest = {
       locale: 'tr',
       conversationId: 'test_' + Date.now(),
-      currencyCode: 'TRY',
-      name: 'Test Fortune Reading',
-      description: 'Test payment link for KahveYolu',
-      price: '1.00', // Small test amount
-      stockEnabled: false,
-      installmentRequested: 'false',
-      addressIgnorable: 'true'
+      price: '1.00',
+      paidPrice: '1.00',
+      currency: 'TRY',
+      installment: '1',
+      paymentChannel: 'WEB',
+      paymentGroup: 'PRODUCT',
+      callbackUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/payment/success`,
+      enabledInstallments: ['2', '3', '6', '9'],
+      buyer: {
+        id: 'test@example.com',
+        name: 'Test',
+        surname: 'User',
+        gsmNumber: '+905551234567',
+        email: 'test@example.com',
+        identityNumber: '11111111111',
+        lastLoginDate: new Date().toISOString().split('T')[0] + ' 10:30:00',
+        registrationDate: new Date().toISOString().split('T')[0] + ' 10:30:00',
+        registrationAddress: 'Test Address',
+        ip: '127.0.0.1',
+        city: 'Istanbul',
+        country: 'Turkey',
+        zipCode: '34000'
+      },
+      shippingAddress: {
+        contactName: 'Test User',
+        city: 'Istanbul',
+        country: 'Turkey',
+        address: 'Test Address',
+        zipCode: '34000'
+      },
+      billingAddress: {
+        contactName: 'Test User',
+        city: 'Istanbul',
+        country: 'Turkey',
+        address: 'Test Address',
+        zipCode: '34000'
+      },
+      basketItems: [
+        {
+          id: 'test_item',
+          name: 'Test Fortune Reading',
+          category1: 'Services',
+          itemType: 'VIRTUAL',
+          price: '1.00'
+        }
+      ]
     };
 
     console.log('🧪 Testing Iyzico API with request:', testRequest);
@@ -20,8 +59,8 @@ export async function POST(request: NextRequest) {
     // Determine API endpoint based on sandbox mode
     const isSandbox = process.env.IYZICO_SANDBOX_MODE === 'true';
     const apiUrl = isSandbox 
-      ? 'https://sandbox-api.iyzipay.com/v2/iyzilink/products'
-      : 'https://api.iyzipay.com/v2/iyzilink/products';
+      ? 'https://sandbox-api.iyzipay.com/v2/payment/iyzipos/checkoutform/initialize/auth'
+      : 'https://api.iyzipay.com/v2/payment/iyzipos/checkoutform/initialize/auth';
 
     console.log(`🔗 Testing Iyzico ${isSandbox ? 'Sandbox' : 'Production'} API: ${apiUrl}`);
 
@@ -46,10 +85,9 @@ export async function POST(request: NextRequest) {
         data: {
           status: iyzicoData.status,
           token: iyzicoData.token,
-          url: iyzicoData.url,
-          imageUrl: iyzicoData.imageUrl
+          paymentPageUrl: iyzicoData.paymentPageUrl
         },
-        testUrl: iyzicoData.url
+        testUrl: iyzicoData.paymentPageUrl
       });
     } else {
       return NextResponse.json({
