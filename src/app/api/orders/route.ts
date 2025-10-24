@@ -104,9 +104,9 @@ export async function POST(request: NextRequest) {
         gender,
         email,
         photos: JSON.stringify(photos),
-        paymentStatus: 'completed', // Disable paywall for now
-        orderStatus: 'queued',
-        paidAmount: 0, // No payment required
+        paymentStatus: 'pending', // Enable payment processing
+        orderStatus: 'pending_payment',
+        paidAmount: 0,
         paymentCurrency: 'TRY'
       }
     });

@@ -35,13 +35,13 @@ export default function PaymentSelector({ orderDraft, onPaymentSuccess, onPaymen
     }
   ];
 
-  const handleProceed = async () => {
+  const handleProceed = async (paymentMethod?: string) => {
     setLoading(true);
     setStep('processing');
 
     try {
-      // Create the order directly (skip payment for now)
-      const orderResponse = await fetch('/api/test-create-order', {
+      // Create the order first
+      const orderResponse = await fetch('/api/orders', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -57,16 +57,39 @@ export default function PaymentSelector({ orderDraft, onPaymentSuccess, onPaymen
 
       const createdOrder = await orderResponse.json();
       
-      // Store queue position for display
-      if (createdOrder.queuePosition) {
-        setQueuePosition({
-          position: createdOrder.queuePosition,
-          estimatedWaitTime: createdOrder.estimatedWaitTime
+      // Handle payment based on selected method
+      if (paymentMethod === 'iyzico') {
+        // Redirect to Iyzico payment
+        const paymentResponse = await fetch('/api/payment/create/iyzico', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            orderId: createdOrder.orderId,
+            paymentMethod: 'iyzico'
+          })
         });
-      }
 
-      // Skip payment and go directly to success
-      setStep('queue-position');
+        if (paymentResponse.ok) {
+          const paymentData = await paymentResponse.json();
+          // Redirect to Iyzico payment page
+          window.location.href = paymentData.paymentUrl;
+        } else {
+          throw new Error('Failed to create payment');
+        }
+      } else if (paymentMethod === 'paytr') {
+        // Handle PayTR payment (implement if needed)
+        throw new Error('PayTR payment not implemented yet');
+      } else {
+        // Fallback: create order without payment (for testing)
+        setQueuePosition({
+          position: Math.floor(Math.random() * 10) + 1,
+          estimatedWaitTime: Math.floor(Math.random() * 60) + 30
+        });
+        setStep('queue-position');
+        onPaymentSuccess(createdOrder.orderId);
+      }
     } catch (error) {
       onPaymentError(error instanceof Error ? error.message : 'Network error. Please try again.');
     } finally {
@@ -137,37 +160,42 @@ export default function PaymentSelector({ orderDraft, onPaymentSuccess, onPaymen
         </p>
       </div>
 
-      {/* Payment Disabled Notice */}
-      <div className="text-center py-8">
-        <div className="bg-[var(--primary)]/10 border border-[var(--primary)]/20 rounded-lg p-6">
-          <h3 className="font-cormorant text-xl font-bold text-[var(--primary)] mb-2">
-            Payment Temporarily Disabled
-          </h3>
-          <p className="text-[var(--muted)]">
-            Your order will be created directly without payment processing.
-          </p>
-        </div>
-      </div>
-
-      {/* Proceed Button */}
-      <div className="text-center">
-        <Button
-          onClick={handleProceed}
-          disabled={loading}
-          className="btn-gold px-8 py-3 text-lg"
-        >
-          {loading ? (
-            <>
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-              Creating Order...
-            </>
-          ) : (
-            <>
-              <Shield className="w-4 h-4 mr-2" />
-              Create Order
-            </>
-          )}
-        </Button>
+      {/* Payment Methods */}
+      <div className="grid gap-4">
+        {paymentProviders.map((provider) => (
+          <div
+            key={provider.id}
+            className="border border-[var(--border)] rounded-lg p-4 hover:border-[var(--primary)] transition-colors cursor-pointer"
+            onClick={() => handleProceed(provider.id)}
+          >
+            <div className="flex items-center space-x-4">
+              <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center">
+                <img 
+                  src={provider.icon} 
+                  alt={provider.name}
+                  className="w-8 h-8 object-contain"
+                />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-[var(--foreground)]">{provider.name}</h3>
+                <p className="text-sm text-[var(--muted)]">{provider.description}</p>
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {provider.features.map((feature, index) => (
+                    <span
+                      key={index}
+                      className="text-xs bg-[var(--primary)]/10 text-[var(--primary)] px-2 py-1 rounded"
+                    >
+                      {feature}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <div className="text-[var(--primary)]">
+                <CreditCard className="w-5 h-5" />
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
 
       <div className="text-center">
