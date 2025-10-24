@@ -283,8 +283,13 @@ export default function StatusPage({ params }: StatusPageProps) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 1.3 }}
-          className="text-center mt-8"
+          className="text-center mt-8 space-x-4"
         >
+          <Link href="/dashboard">
+            <Button variant="outline" className="border-[var(--border)] text-[var(--foreground)] hover:bg-[var(--primary)] hover:text-black">
+              Back to Dashboard
+            </Button>
+          </Link>
           <Link href="/">
             <Button variant="outline" className="border-[var(--border)] text-[var(--foreground)] hover:bg-[var(--primary)] hover:text-black">
               Order Another Reading
