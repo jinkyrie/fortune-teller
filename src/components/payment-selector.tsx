@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,12 @@ export default function PaymentSelector({ orderDraft, onPaymentSuccess, onPaymen
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState<'select' | 'processing' | 'queue-position'>('select');
   const [queuePosition, setQueuePosition] = useState<{position: number, estimatedWaitTime: number} | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  // Fix hydration issues
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const paymentProviders = [
     {
@@ -148,6 +154,22 @@ export default function PaymentSelector({ orderDraft, onPaymentSuccess, onPaymen
     );
   }
 
+
+  // Prevent hydration issues
+  if (!mounted) {
+    return (
+      <div className="space-y-6">
+        <div className="text-center">
+          <h2 className="font-cormorant text-3xl font-bold text-[var(--foreground)] mb-2">
+            Choose Payment Method
+          </h2>
+          <p className="text-[var(--muted)]">
+            Loading payment options...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
