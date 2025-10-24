@@ -4,7 +4,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Shield, Check } from "lucide-react";
+import { Shield, Check, CreditCard } from "lucide-react";
 
 interface PaymentSelectorProps {
   orderDraft: any;
