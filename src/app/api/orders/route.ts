@@ -111,57 +111,14 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    // Add to queue and get position
-    let queuePosition;
-    try {
-      // First, update all existing queue positions (using static imports)
-      await updateQueuePositions();
-      
-      // Then get the position for this order
-      const position = await getQueuePosition(order.id);
-      
-      if (position) {
-        // Update the order with the calculated position
-        await prisma.order.update({
-          where: { id: order.id },
-          data: {
-            queuePosition: position.position,
-            estimatedWaitTime: position.estimatedWaitTime
-          }
-        });
-        queuePosition = position;
-      } else {
-        throw new Error('Failed to calculate queue position');
-      }
-    } catch (queueError) {
-      console.error('Queue error (non-fatal):', queueError);
-      // Continue without queue position if queue fails
-      queuePosition = { position: 1, estimatedWaitTime: 30 };
-    }
+    console.log(`✅ Order created: ${order.id} with status: pending_payment`);
 
-    // Send queue position email notification (optional)
-    try {
-      await sendEmail({
-        to: email,
-        subject: 'Your Reading is in Queue - KahveYolu',
-        template: 'queue-position',
-        data: {
-          fullName,
-          position: queuePosition.position,
-          estimatedWaitTime: queuePosition.estimatedWaitTime,
-          orderId: order.id
-        }
-      });
-    } catch (emailError) {
-      console.error('Email error (non-fatal):', emailError);
-      // Continue without email if email fails
-    }
+    // Email will be sent after successful payment
 
     return NextResponse.json({
-      ...order,
-      queuePosition: queuePosition.position,
-      estimatedWaitTime: queuePosition.estimatedWaitTime,
-      queueStats
+      orderId: order.id,
+      status: 'pending_payment',
+      message: 'Order created successfully. Please proceed with payment.'
     });
   } catch (error) {
     console.error('Error creating order:', error);
