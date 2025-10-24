@@ -93,6 +93,7 @@ export async function POST(request: NextRequest) {
       : 'https://api.iyzipay.com/v2/payment/iyzipos/checkoutform/initialize/auth';
 
     console.log(`🔗 Using Iyzico ${isSandbox ? 'Sandbox' : 'Production'} API: ${apiUrl}`);
+    console.log('📤 Iyzico Request:', JSON.stringify(iyzicoRequest, null, 2));
 
     // Create iyzilink product
     const iyzicoResponse = await fetch(apiUrl, {
@@ -108,8 +109,17 @@ export async function POST(request: NextRequest) {
     
     console.log('📊 Iyzico API Response:', {
       status: iyzicoResponse.status,
+      statusText: iyzicoResponse.statusText,
       data: iyzicoData
     });
+
+    if (iyzicoResponse.status !== 200) {
+      console.error('❌ Iyzico API Error:', {
+        status: iyzicoResponse.status,
+        statusText: iyzicoResponse.statusText,
+        response: iyzicoData
+      });
+    }
 
     if (iyzicoData.status === 'success') {
       // Update order with payment URL
