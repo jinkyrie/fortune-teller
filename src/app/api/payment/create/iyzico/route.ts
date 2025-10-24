@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import Iyzipay from 'iyzipay';
 
 export async function POST(request: NextRequest) {
   try {
@@ -33,18 +34,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Iyzico Pay with Iyzico API integration - Simplified format
-    const price = process.env.PAYMENT_AMOUNT || '50.00';
-    
+    // Initialize Iyzico client
+    const isSandbox = process.env.IYZICO_SANDBOX_MODE === 'true';
+    const iyzipay = new Iyzipay({
+      apiKey: process.env.IYZICO_API_KEY,
+      secretKey: process.env.IYZICO_SECRET_KEY,
+      uri: isSandbox ? 'https://sandbox-api.iyzipay.com' : 'https://api.iyzipay.com'
+    });
+
     console.log('🔍 Iyzico Payment Debug:', {
       orderId,
-      price,
       baseUrl: process.env.NEXT_PUBLIC_BASE_URL,
       hasApiKey: !!process.env.IYZICO_API_KEY,
       hasSecretKey: !!process.env.IYZICO_SECRET_KEY,
-      sandboxMode: process.env.IYZICO_SANDBOX_MODE
+      sandboxMode: isSandbox
     });
-    const iyzicoRequest = {
+
+    // Create Iyzico checkout form request
+    const price = process.env.PAYMENT_AMOUNT || '50.00';
+    const request = {
       locale: 'tr',
       conversationId: orderId,
       price: price,
@@ -95,89 +103,43 @@ export async function POST(request: NextRequest) {
       ]
     };
 
-    // Determine API endpoint based on sandbox mode
-    const isSandbox = process.env.IYZICO_SANDBOX_MODE === 'true';
-    const apiUrl = isSandbox 
-      ? 'https://sandbox-api.iyzipay.com/v2/iyzilink/products'
-      : 'https://api.iyzipay.com/v2/iyzilink/products';
+    console.log('📤 Creating Iyzico checkout form...');
 
-    console.log(`🔗 Using Iyzico ${isSandbox ? 'Sandbox' : 'Production'} API: ${apiUrl}`);
-    console.log('📤 Iyzico Request:', JSON.stringify(iyzicoRequest, null, 2));
-
-    // Create authorization header for Iyzico (Basic Auth format)
-    const authString = `${process.env.IYZICO_API_KEY}:${process.env.IYZICO_SECRET_KEY}`;
-    const authHeader = Buffer.from(authString).toString('base64');
-
-    console.log('🔑 Auth Debug:', {
-      apiKey: process.env.IYZICO_API_KEY?.substring(0, 10) + '...',
-      secretKey: process.env.IYZICO_SECRET_KEY?.substring(0, 10) + '...',
-      authHeaderLength: authHeader.length
-    });
-
-    // Create iyzilink product
-    const iyzicoResponse = await fetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Basic ${authHeader}`
-      },
-      body: JSON.stringify(iyzicoRequest)
-    });
-
-    const iyzicoData = await iyzicoResponse.json();
-    
-    console.log('📊 Iyzico API Response:', {
-      status: iyzicoResponse.status,
-      statusText: iyzicoResponse.statusText,
-      data: iyzicoData
-    });
-
-    if (iyzicoResponse.status !== 200) {
-      console.error('❌ Iyzico API Error:', {
-        status: iyzicoResponse.status,
-        statusText: iyzicoResponse.statusText,
-        response: iyzicoData,
-        url: apiUrl,
-        sandboxMode: isSandbox
+    // Create checkout form using official Iyzico client
+    const checkoutFormInitialize = await new Promise((resolve, reject) => {
+      iyzipay.checkoutFormInitialize.create(request, (err, result) => {
+        if (err) {
+          console.error('❌ Iyzico API Error:', err);
+          reject(err);
+        } else {
+          console.log('📊 Iyzico Response:', result);
+          resolve(result);
+        }
       });
-      
-      return NextResponse.json(
-        { 
-          error: 'Iyzico API Error',
-          details: iyzicoData.errorMessage || `HTTP ${iyzicoResponse.status}: ${iyzicoResponse.statusText}`,
-          debug: {
-            url: apiUrl,
-            sandboxMode: isSandbox,
-            hasApiKey: !!process.env.IYZICO_API_KEY,
-            hasSecretKey: !!process.env.IYZICO_SECRET_KEY
-          }
-        },
-        { status: 500 }
-      );
-    }
+    });
 
-    if (iyzicoData.status === 'success') {
+    if (checkoutFormInitialize.status === 'success') {
       // Update order with payment URL
       await prisma.order.update({
         where: { id: orderId },
         data: {
-          paymentUrl: iyzicoData.paymentPageUrl,
-          paymentToken: iyzicoData.token,
+          paymentUrl: checkoutFormInitialize.paymentPageUrl,
+          paymentToken: checkoutFormInitialize.token,
           paymentProvider: 'iyzico'
         }
       });
 
       return NextResponse.json({
         success: true,
-        paymentUrl: iyzicoData.paymentPageUrl,
-        token: iyzicoData.token
+        paymentUrl: checkoutFormInitialize.paymentPageUrl,
+        token: checkoutFormInitialize.token
       });
     } else {
-      console.error('❌ Iyzico API failed:', iyzicoData);
+      console.error('❌ Iyzico API failed:', checkoutFormInitialize);
       return NextResponse.json(
         { 
           error: 'Failed to create payment link',
-          details: iyzicoData.errorMessage || 'Unknown error'
+          details: checkoutFormInitialize.errorMessage || 'Unknown error'
         },
         { status: 500 }
       );
