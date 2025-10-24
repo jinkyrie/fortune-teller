@@ -169,7 +169,7 @@ export default function PaymentSelector({ orderDraft, onPaymentSuccess, onPaymen
             onClick={() => handleProceed(provider.id)}
           >
             <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center">
+              <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center border border-gray-200">
                 <img 
                   src={provider.icon} 
                   alt={provider.name}
