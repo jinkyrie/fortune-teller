@@ -17,8 +17,16 @@ export async function POST(request: NextRequest) {
 
     console.log('🧪 Testing Iyzico API with request:', testRequest);
 
-    // Test the sandbox API
-    const iyzicoResponse = await fetch('https://sandbox-api.iyzipay.com/v2/iyzilink/products', {
+    // Determine API endpoint based on sandbox mode
+    const isSandbox = process.env.IYZICO_SANDBOX_MODE === 'true';
+    const apiUrl = isSandbox 
+      ? 'https://sandbox-api.iyzipay.com/v2/iyzilink/products'
+      : 'https://api.iyzipay.com/v2/iyzilink/products';
+
+    console.log(`🔗 Testing Iyzico ${isSandbox ? 'Sandbox' : 'Production'} API: ${apiUrl}`);
+
+    // Test the API
+    const iyzicoResponse = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
