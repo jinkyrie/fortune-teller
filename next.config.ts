@@ -30,10 +30,8 @@ const nextConfig: NextConfig = {
       }
     ];
   },
-  // Disable experimental features that cause warnings
-  experimental: {
-    serverComponentsExternalPackages: []
-  },
+  // Fix experimental options
+  serverExternalPackages: [],
   // Force clean builds
 };
 
