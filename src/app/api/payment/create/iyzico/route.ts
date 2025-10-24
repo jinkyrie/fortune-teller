@@ -98,8 +98,8 @@ export async function POST(request: NextRequest) {
     // Determine API endpoint based on sandbox mode
     const isSandbox = process.env.IYZICO_SANDBOX_MODE === 'true';
     const apiUrl = isSandbox 
-      ? 'https://sandbox-api.iyzipay.com/v2/payment/iyzipos/checkoutform/initialize'
-      : 'https://api.iyzipay.com/v2/payment/iyzipos/checkoutform/initialize';
+      ? 'https://sandbox-api.iyzipay.com/v2/iyzilink/products'
+      : 'https://api.iyzipay.com/v2/iyzilink/products';
 
     console.log(`🔗 Using Iyzico ${isSandbox ? 'Sandbox' : 'Production'} API: ${apiUrl}`);
     console.log('📤 Iyzico Request:', JSON.stringify(iyzicoRequest, null, 2));
