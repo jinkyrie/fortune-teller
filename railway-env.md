@@ -59,3 +59,4 @@ Railway provides PostgreSQL databases. To get your DATABASE_URL:
 2. Railway will automatically provide the DATABASE_URL
 3. Copy this URL and set it as the DATABASE_URL environment variable
 4. Run `npx prisma db push` to create the database schema
+

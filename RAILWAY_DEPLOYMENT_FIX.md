@@ -74,3 +74,4 @@ The build process now includes:
 - **DATABASE_URL not found**: Add PostgreSQL service in Railway
 - **Clerk errors**: Verify Clerk keys are correct and not placeholder values
 - **Build timeout**: Increase build timeout in Railway settings
+
