@@ -81,3 +81,7 @@ For testing payments:
 - No 500 errors in Vercel logs
 
 **Ready to test!** 🚀
+
+
+
+
