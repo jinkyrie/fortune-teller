@@ -3,9 +3,13 @@ import { prisma } from '@/lib/prisma';
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('🔍 Payment API called');
+    
     const { orderId, paymentMethod } = await request.json();
+    console.log('📝 Request data:', { orderId, paymentMethod });
 
     if (!orderId) {
+      console.error('❌ No order ID provided');
       return NextResponse.json(
         { error: 'Order ID is required' },
         { status: 400 }
@@ -22,16 +26,20 @@ export async function POST(request: NextRequest) {
     }
 
     // Get order details
+    console.log('🔍 Looking for order:', orderId);
     const order = await prisma.order.findUnique({
       where: { id: orderId }
     });
 
     if (!order) {
+      console.error('❌ Order not found:', orderId);
       return NextResponse.json(
-        { error: 'Order not found' },
+        { error: 'Order not found', orderId },
         { status: 404 }
       );
     }
+    
+    console.log('✅ Order found:', { id: order.id, email: order.email, fullName: order.fullName });
 
     // Iyzico Pay with Iyzico API integration - Simplified format
     const price = process.env.PAYMENT_AMOUNT || '50.00';
