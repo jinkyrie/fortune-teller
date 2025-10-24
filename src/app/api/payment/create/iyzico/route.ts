@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Iyzico Pay with Iyzico API integration
+    // Iyzico Pay with Iyzico API integration - Simplified format
     const price = process.env.PAYMENT_AMOUNT || '50.00';
     const iyzicoRequest = {
       locale: 'tr',
@@ -53,8 +53,8 @@ export async function POST(request: NextRequest) {
         gsmNumber: '+905551234567',
         email: order.email,
         identityNumber: '11111111111',
-        lastLoginDate: new Date().toISOString().split('T')[0] + ' 10:30:00',
-        registrationDate: new Date().toISOString().split('T')[0] + ' 10:30:00',
+        lastLoginDate: '2024-01-01 10:30:00',
+        registrationDate: '2024-01-01 10:30:00',
         registrationAddress: 'Test Address',
         ip: '127.0.0.1',
         city: 'Istanbul',
