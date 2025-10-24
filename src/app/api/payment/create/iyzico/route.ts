@@ -12,6 +12,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check if Iyzico credentials are configured
+    if (!process.env.IYZICO_API_KEY || !process.env.IYZICO_SECRET_KEY) {
+      console.error('❌ Iyzico credentials not configured');
+      return NextResponse.json(
+        { error: 'Payment gateway not configured. Please contact support.' },
+        { status: 500 }
+      );
+    }
+
     // Get order details
     const order = await prisma.order.findUnique({
       where: { id: orderId }
@@ -56,6 +65,11 @@ export async function POST(request: NextRequest) {
     });
 
     const iyzicoData = await iyzicoResponse.json();
+    
+    console.log('📊 Iyzico API Response:', {
+      status: iyzicoResponse.status,
+      data: iyzicoData
+    });
 
     if (iyzicoData.status === 'success') {
       // Update order with payment URL
@@ -74,8 +88,12 @@ export async function POST(request: NextRequest) {
         token: iyzicoData.token
       });
     } else {
+      console.error('❌ Iyzico API failed:', iyzicoData);
       return NextResponse.json(
-        { error: 'Failed to create payment link' },
+        { 
+          error: 'Failed to create payment link',
+          details: iyzicoData.errorMessage || 'Unknown error'
+        },
         { status: 500 }
       );
     }

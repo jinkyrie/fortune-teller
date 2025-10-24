@@ -165,8 +165,12 @@ export default function PaymentSelector({ orderDraft, onPaymentSuccess, onPaymen
         {paymentProviders.map((provider) => (
           <div
             key={provider.id}
-            className="border border-[var(--border)] rounded-lg p-4 hover:border-[var(--primary)] transition-colors cursor-pointer"
-            onClick={() => handleProceed(provider.id)}
+            className={`border rounded-lg p-4 transition-colors cursor-pointer ${
+              selectedProvider === provider.id
+                ? 'border-[var(--primary)] bg-[var(--primary)]/5'
+                : 'border-[var(--border)] hover:border-[var(--primary)]'
+            }`}
+            onClick={() => setSelectedProvider(provider.id)}
           >
             <div className="flex items-center space-x-4">
               <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center border border-gray-200">
@@ -197,6 +201,29 @@ export default function PaymentSelector({ orderDraft, onPaymentSuccess, onPaymen
           </div>
         ))}
       </div>
+
+      {/* Proceed Button */}
+      {selectedProvider && (
+        <div className="text-center">
+          <Button
+            onClick={() => handleProceed(selectedProvider)}
+            disabled={loading}
+            className="btn-gold px-8 py-3 text-lg"
+          >
+            {loading ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                Processing...
+              </>
+            ) : (
+              <>
+                <Shield className="w-4 h-4 mr-2" />
+                Proceed with {paymentProviders.find(p => p.id === selectedProvider)?.name}
+              </>
+            )}
+          </Button>
+        </div>
+      )}
 
       <div className="text-center">
         <p className="text-[var(--muted)] text-sm">
