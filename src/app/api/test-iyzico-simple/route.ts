@@ -13,8 +13,10 @@ export async function GET() {
     console.log('🔍 Environment Check:', envCheck);
 
     return NextResponse.json({
-      success: true,
-      message: 'Environment variables check',
+      message: "Iyzico API Test Endpoint",
+      usage: "POST to test Iyzico API connection",
+      requiredEnvVars: ["IYZICO_API_KEY", "IYZICO_SECRET_KEY"],
+      sandboxUrl: "https://sandbox-api.iyzipay.com/v2/payment/iyzipos/checkoutform/initialize",
       environment: envCheck
     });
   } catch (error) {
@@ -83,12 +85,17 @@ export async function POST() {
 
     console.log('📤 Sending request to Iyzico...');
     
-    const apiUrl = 'https://sandbox-api.iyzipay.com/v2/payment/iyzipos/checkoutform/initialize/auth';
+    const apiUrl = 'https://sandbox-api.iyzipay.com/v2/payment/iyzipos/checkoutform/initialize';
+    
+    // Create proper authorization header
+    const authString = `${process.env.IYZICO_API_KEY}:${process.env.IYZICO_SECRET_KEY}`;
+    const authHeader = Buffer.from(authString).toString('base64');
+    
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `IYZWS ${process.env.IYZICO_API_KEY}:${process.env.IYZICO_SECRET_KEY}`
+        'Authorization': `IYZWS ${authHeader}`
       },
       body: JSON.stringify(testRequest)
     });

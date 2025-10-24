@@ -89,18 +89,22 @@ export async function POST(request: NextRequest) {
     // Determine API endpoint based on sandbox mode
     const isSandbox = process.env.IYZICO_SANDBOX_MODE === 'true';
     const apiUrl = isSandbox 
-      ? 'https://sandbox-api.iyzipay.com/v2/payment/iyzipos/checkoutform/initialize/auth'
-      : 'https://api.iyzipay.com/v2/payment/iyzipos/checkoutform/initialize/auth';
+      ? 'https://sandbox-api.iyzipay.com/v2/payment/iyzipos/checkoutform/initialize'
+      : 'https://api.iyzipay.com/v2/payment/iyzipos/checkoutform/initialize';
 
     console.log(`🔗 Using Iyzico ${isSandbox ? 'Sandbox' : 'Production'} API: ${apiUrl}`);
     console.log('📤 Iyzico Request:', JSON.stringify(iyzicoRequest, null, 2));
+
+    // Create authorization header for Iyzico
+    const authString = `${process.env.IYZICO_API_KEY}:${process.env.IYZICO_SECRET_KEY}`;
+    const authHeader = Buffer.from(authString).toString('base64');
 
     // Create iyzilink product
     const iyzicoResponse = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `IYZWS ${process.env.IYZICO_API_KEY}:${process.env.IYZICO_SECRET_KEY}`
+        'Authorization': `IYZWS ${authHeader}`
       },
       body: JSON.stringify(iyzicoRequest)
     });
@@ -117,8 +121,24 @@ export async function POST(request: NextRequest) {
       console.error('❌ Iyzico API Error:', {
         status: iyzicoResponse.status,
         statusText: iyzicoResponse.statusText,
-        response: iyzicoData
+        response: iyzicoData,
+        url: apiUrl,
+        sandboxMode: isSandbox
       });
+      
+      return NextResponse.json(
+        { 
+          error: 'Iyzico API Error',
+          details: iyzicoData.errorMessage || `HTTP ${iyzicoResponse.status}: ${iyzicoResponse.statusText}`,
+          debug: {
+            url: apiUrl,
+            sandboxMode: isSandbox,
+            hasApiKey: !!process.env.IYZICO_API_KEY,
+            hasSecretKey: !!process.env.IYZICO_SECRET_KEY
+          }
+        },
+        { status: 500 }
+      );
     }
 
     if (iyzicoData.status === 'success') {
