@@ -1,31 +1,15 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "api/iyzico/create-payment.js",
-      "use": "@vercel/node"
-    },
-    {
-      "src": "api/iyzico/callback.js", 
-      "use": "@vercel/node"
-    },
-    {
-      "src": "api/health.js",
-      "use": "@vercel/node"
+  "buildCommand": "npm run build",
+  "outputDirectory": ".next",
+  "framework": "nextjs",
+  "installCommand": "npm install",
+  "devCommand": "npm run dev",
+  "functions": {
+    "src/app/api/**/*.ts": {
+      "maxDuration": 30
     }
-  ],
-  "routes": [
-    {
-      "src": "/api/iyzico/create-payment",
-      "dest": "/api/iyzico/create-payment.js"
-    },
-    {
-      "src": "/api/iyzico/callback",
-      "dest": "/api/iyzico/callback.js"
-    },
-    {
-      "src": "/health",
-      "dest": "/api/health.js"
-    }
-  ]
+  },
+  "env": {
+    "IYZICO_SANDBOX_MODE": "true"
+  }
 }
