@@ -1,0 +1,28 @@
+{
+  "name": "fortune-teller-backend",
+  "version": "1.0.0",
+  "description": "Node.js backend for iyzico payment integration",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "helmet": "^7.1.0",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "keywords": [
+    "iyzico",
+    "payment",
+    "nodejs",
+    "express"
+  ],
+  "author": "Fortune Teller Team",
+  "license": "MIT"
+}

@@ -65,24 +65,36 @@ export default function PaymentSelector({ orderDraft, onPaymentSuccess, onPaymen
       
       // Handle payment based on selected method
       if (paymentMethod === 'iyzico') {
-        // Redirect to Iyzico payment
-        const paymentResponse = await fetch('/api/payment/create/iyzico', {
+        // Use new backend integration for Iyzico payment
+        const paymentResponse = await fetch('http://localhost:3001/api/iyzico/create-payment', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            orderId: createdOrder.orderId,
-            paymentMethod: 'iyzico'
+            amount: createdOrder.totalAmount || '50.00',
+            currency: 'TRY',
+            email: createdOrder.email,
+            basketId: createdOrder.orderId,
+            items: [{
+              id: createdOrder.orderId,
+              name: 'Fortune Reading',
+              price: createdOrder.totalAmount || '50.00'
+            }]
           })
         });
 
         if (paymentResponse.ok) {
           const paymentData = await paymentResponse.json();
-          // Redirect to Iyzico payment page
-          window.location.href = paymentData.paymentUrl;
+          if (paymentData.success) {
+            // Redirect to Iyzico payment page
+            window.location.href = paymentData.paymentUrl;
+          } else {
+            throw new Error(paymentData.error || 'Failed to create payment');
+          }
         } else {
-          throw new Error('Failed to create payment');
+          const errorData = await paymentResponse.json();
+          throw new Error(errorData.error || 'Failed to create payment');
         }
       } else if (paymentMethod === 'paytr') {
         // Handle PayTR payment (implement if needed)

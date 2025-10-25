@@ -34,12 +34,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Initialize Iyzico client with correct endpoint
-    const isSandbox = process.env.IYZICO_SANDBOX_MODE === 'true';
+    // Initialize Iyzico client with sandbox endpoint
     const iyzipay = new Iyzipay({
       apiKey: process.env.IYZICO_API_KEY,
       secretKey: process.env.IYZICO_SECRET_KEY,
-      uri: isSandbox ? 'https://sandbox-api.iyzipay.com' : 'https://api.iyzipay.com'
+      uri: 'https://sandbox-api.iyzipay.com'
     });
 
     console.log('🔍 Iyzico Payment Debug:', {
@@ -47,7 +46,7 @@ export async function POST(request: NextRequest) {
       baseUrl: process.env.NEXT_PUBLIC_BASE_URL,
       hasApiKey: !!process.env.IYZICO_API_KEY,
       hasSecretKey: !!process.env.IYZICO_SECRET_KEY,
-      sandboxMode: isSandbox
+      sandboxMode: true
     });
 
     // HMACSHA256 Authentication Implementation
@@ -122,37 +121,8 @@ export async function POST(request: NextRequest) {
 
     console.log('📤 Creating Iyzico checkout form with correct authentication...');
 
-    // Use correct sandbox endpoint (without /v2/)
-    const apiUrl = isSandbox 
-      ? 'https://sandbox-api.iyzipay.com/payment/iyzipos/checkoutform/initialize'
-      : 'https://api.iyzipay.com/payment/iyzipos/checkoutform/initialize';
-
-    const uriPath = '/payment/iyzipos/checkoutform/initialize';
-    const requestBody = JSON.stringify(iyzicoRequest);
-
-    // Create HMACSHA256 authentication
-    const auth = createIyzicoAuth(
-      process.env.IYZICO_API_KEY!,
-      process.env.IYZICO_SECRET_KEY!,
-      uriPath,
-      requestBody
-    );
-
-    console.log('🔑 Authentication created:', {
-      randomKey: auth.randomKey,
-      authHeader: auth.authorization.substring(0, 50) + '...'
-    });
-
-    // Make API call with correct authentication
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': auth.authorization,
-        'x-iyzi-rnd': auth.randomKey
-      },
-      body: requestBody
-    });
+    // Use sandbox base URL only - no endpoint path documented
+    const apiUrl = 'https://sandbox-api.iyzipay.com';
 
     const responseText = await response.text();
     console.log('📊 Iyzico API Response Status:', response.status);
