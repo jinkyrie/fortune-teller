@@ -65,10 +65,9 @@ export default function PaymentSelector({ orderDraft, onPaymentSuccess, onPaymen
       
       // Handle payment based on selected method
       if (paymentMethod === 'iyzico') {
-        // Try new backend integration first, fallback to existing endpoint
+        // Try new Vercel API integration first, fallback to existing endpoint
         try {
-          const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
-          const paymentResponse = await fetch(`${backendUrl}/api/iyzico/create-payment`, {
+          const paymentResponse = await fetch('/api/iyzico/create-payment', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -99,8 +98,8 @@ export default function PaymentSelector({ orderDraft, onPaymentSuccess, onPaymen
             const errorData = await paymentResponse.json();
             throw new Error(errorData.error || 'Failed to create payment');
           }
-        } catch (backendError) {
-          console.warn('Backend not available, falling back to existing endpoint:', backendError);
+        } catch (apiError) {
+          console.warn('New API not available, falling back to existing endpoint:', apiError);
           
           // Fallback to existing iyzico endpoint
           const paymentResponse = await fetch('/api/payment/create/iyzico', {
