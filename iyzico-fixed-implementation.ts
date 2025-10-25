@@ -1,6 +1,26 @@
+// Fixed Iyzico Implementation with Correct Authentication and Endpoint
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import crypto from 'crypto';
+
+// HMACSHA256 Authentication Implementation
+function createIyzicoAuth(apiKey: string, secretKey: string, uriPath: string, requestBody: string) {
+  // Step 1: Generate random key (x-iyzi-rnd)
+  const randomKey = new Date().getTime() + Math.random().toString(36).substring(2, 15);
+  
+  // Step 2: Create encrypted data using HMACSHA256
+  const payload = randomKey + uriPath + requestBody;
+  const encryptedData = crypto.createHmac('sha256', secretKey).update(payload).digest('hex');
+  
+  // Step 3: Create authorization string
+  const authorizationString = `apiKey:${apiKey}&randomKey:${randomKey}&signature:${encryptedData}`;
+  const base64Auth = Buffer.from(authorizationString).toString('base64');
+  
+  return {
+    authorization: `IYZWSv2 ${base64Auth}`,
+    randomKey: randomKey
+  };
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -34,35 +54,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Initialize Iyzico client with correct endpoint
-    const isSandbox = process.env.IYZICO_SANDBOX_MODE === 'true';
-    const iyzipay = new Iyzipay({
-      apiKey: process.env.IYZICO_API_KEY,
-      secretKey: process.env.IYZICO_SECRET_KEY,
-      uri: isSandbox ? 'https://sandbox-api.iyzipay.com' : 'https://api.iyzipay.com'
-    });
-
     console.log('🔍 Iyzico Payment Debug:', {
       orderId,
       baseUrl: process.env.NEXT_PUBLIC_BASE_URL,
       hasApiKey: !!process.env.IYZICO_API_KEY,
       hasSecretKey: !!process.env.IYZICO_SECRET_KEY,
-      sandboxMode: isSandbox
+      sandboxMode: process.env.IYZICO_SANDBOX_MODE === 'true'
     });
-
-    // HMACSHA256 Authentication Implementation
-    function createIyzicoAuth(apiKey: string, secretKey: string, uriPath: string, requestBody: string) {
-      const randomKey = new Date().getTime() + Math.random().toString(36).substring(2, 15);
-      const payload = randomKey + uriPath + requestBody;
-      const encryptedData = crypto.createHmac('sha256', secretKey).update(payload).digest('hex');
-      const authorizationString = `apiKey:${apiKey}&randomKey:${randomKey}&signature:${encryptedData}`;
-      const base64Auth = Buffer.from(authorizationString).toString('base64');
-      
-      return {
-        authorization: `IYZWSv2 ${base64Auth}`,
-        randomKey: randomKey
-      };
-    }
 
     // Create Iyzico checkout form request
     const price = process.env.PAYMENT_AMOUNT || '50.00';
@@ -123,6 +121,7 @@ export async function POST(request: NextRequest) {
     console.log('📤 Creating Iyzico checkout form with correct authentication...');
 
     // Use correct sandbox endpoint (without /v2/)
+    const isSandbox = process.env.IYZICO_SANDBOX_MODE === 'true';
     const apiUrl = isSandbox 
       ? 'https://sandbox-api.iyzipay.com/payment/iyzipos/checkoutform/initialize'
       : 'https://api.iyzipay.com/payment/iyzipos/checkoutform/initialize';
