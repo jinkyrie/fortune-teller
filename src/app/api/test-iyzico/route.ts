@@ -1,32 +1,52 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import crypto from 'crypto';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    // Check environment variables
-    const hasApiKey = !!process.env.IYZICO_API_KEY;
-    const hasSecretKey = !!process.env.IYZICO_SECRET_KEY;
-    const sandboxMode = process.env.IYZICO_SANDBOX_MODE === 'true';
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+    // Check if Iyzico credentials are configured
+    if (!process.env.IYZICO_API_KEY || !process.env.IYZICO_SECRET_KEY) {
+      return NextResponse.json({
+        success: false,
+        error: 'Iyzico credentials not configured',
+        hasApiKey: !!process.env.IYZICO_API_KEY,
+        hasSecretKey: !!process.env.IYZICO_SECRET_KEY
+      });
+    }
+
+    // Test authentication signature generation
+    const testPayload = 'test-payload';
+    const randomKey = new Date().getTime() + Math.random().toString(36).substring(2, 15);
+    const payload = randomKey + '/test' + testPayload;
+    const hash = crypto.createHash('sha1').update(payload).digest('hex');
+    const authorizationString = `apiKey:${process.env.IYZICO_API_KEY}&randomKey:${randomKey}&signature:${hash}`;
+    const base64Auth = Buffer.from(authorizationString).toString('base64');
 
     return NextResponse.json({
       success: true,
-      environment: {
-        hasApiKey,
-        hasSecretKey,
-        sandboxMode,
-        baseUrl,
-        apiKeyPrefix: process.env.IYZICO_API_KEY?.substring(0, 10) + '...',
-        secretKeyPrefix: process.env.IYZICO_SECRET_KEY?.substring(0, 10) + '...'
+      credentials: {
+        hasApiKey: !!process.env.IYZICO_API_KEY,
+        hasSecretKey: !!process.env.IYZICO_SECRET_KEY,
+        apiKeyLength: process.env.IYZICO_API_KEY?.length || 0,
+        secretKeyLength: process.env.IYZICO_SECRET_KEY?.length || 0
       },
-      endpoints: {
-        sandbox: 'https://sandbox-api.iyzipay.com/v2/payment/iyzipos/checkoutform/initialize',
-        production: 'https://api.iyzipay.com/v2/payment/iyzipos/checkoutform/initialize'
+      authentication: {
+        randomKey,
+        hash,
+        authString: authorizationString,
+        base64Auth,
+        fullAuth: `IYZWSv2 ${base64Auth}`
+      },
+      environment: {
+        nodeEnv: process.env.NODE_ENV,
+        sandboxMode: process.env.IYZICO_SANDBOX_MODE,
+        baseUrl: process.env.NEXT_PUBLIC_BASE_URL
       }
     });
   } catch (error) {
-    return NextResponse.json(
-      { error: 'Test failed', details: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 }
-    );
+    console.error('Test error:', error);
+    return NextResponse.json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 }
