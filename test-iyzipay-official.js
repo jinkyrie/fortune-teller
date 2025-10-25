@@ -7,7 +7,7 @@ async function testOfficialIyzipay() {
   // Initialize Iyzico client
   const iyzipay = new Iyzipay({
     apiKey: 'sandbox-vrMqCkK0DbVB8DhB8BtTOgMyoKEETIfP',
-    secretKey: 'sandbox-9VJ6umMMgv1wjrxkbuOUSGCfRhJ9gDAb',
+    secretKey: 'ErnRrrnrlAq9WUr7qRzZUNKp5mQaNXaYP',
     uri: 'https://sandbox-api.iyzipay.com'
   });
 
