@@ -53,13 +53,13 @@ export async function POST(request: NextRequest) {
       iyzicoBaseUrl
     });
 
-    // Iyzico Authentication Implementation (SHA1 + Base64)
+    // Iyzico Authentication Implementation (HMAC-SHA1)
     function createIyzicoAuth(apiKey: string, secretKey: string, uriPath: string, requestBody: string) {
       const randomKey = new Date().getTime() + Math.random().toString(36).substring(2, 15);
       const payload = randomKey + uriPath + requestBody;
       
-      // Use SHA1 hash (not SHA256) as per iyzico documentation
-      const hash = crypto.createHash('sha1').update(payload).digest('hex');
+      // Use HMAC-SHA1 as per iyzico documentation
+      const hash = crypto.createHmac('sha1', secretKey).update(payload).digest('hex');
       const authorizationString = `apiKey:${apiKey}&randomKey:${randomKey}&signature:${hash}`;
       const base64Auth = Buffer.from(authorizationString).toString('base64');
       
@@ -78,17 +78,21 @@ export async function POST(request: NextRequest) {
                     request.headers.get('x-real-ip') || 
                     '127.0.0.1';
     
+    // Create iyzico request with proper field types and structure
     const iyzicoRequest = {
       locale: 'tr',
       conversationId: orderId,
-      price: price,
-      paidPrice: price,
+      price: parseFloat(price).toFixed(2),
+      paidPrice: parseFloat(price).toFixed(2),
       currency: 'TRY',
       installment: '1',
       paymentChannel: 'WEB',
       paymentGroup: 'PRODUCT',
       callbackUrl: `${baseUrl}/payment/success`,
       enabledInstallments: ['2', '3', '6', '9'],
+      force3ds: '0',
+      cardUserKey: '',
+      posOrderId: orderId,
       buyer: {
         id: order.email,
         name: order.fullName || 'Test User',
@@ -125,7 +129,7 @@ export async function POST(request: NextRequest) {
           category1: 'Services',
           category2: 'Fortune Telling',
           itemType: 'VIRTUAL',
-          price: price
+          price: parseFloat(price).toFixed(2)
         }
       ]
     };

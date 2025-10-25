@@ -24,7 +24,7 @@ export async function GET() {
     console.log('🔐 Generating test signature...');
     console.log('Payload:', payload);
     
-    const hash = crypto.createHash('sha1').update(payload).digest('hex');
+    const hash = crypto.createHmac('sha1', process.env.IYZICO_SECRET_KEY!).update(payload).digest('hex');
     const authorizationString = `apiKey:${process.env.IYZICO_API_KEY}&randomKey:${randomKey}&signature:${hash}`;
     const base64Auth = Buffer.from(authorizationString).toString('base64');
     const fullAuth = `IYZWSv2 ${base64Auth}`;
