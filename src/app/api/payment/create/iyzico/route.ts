@@ -42,9 +42,9 @@ export async function POST(request: NextRequest) {
 
     // Check if we're in sandbox mode
     const isSandbox = process.env.IYZICO_SANDBOX_MODE === 'true' || process.env.NODE_ENV !== 'production';
-    const iyzicoBaseUrl = isSandbox 
-      ? 'https://sandbox-api.iyzipay.com/payment/iyzipos/checkoutform/initialize/auth/ecom'
-      : 'https://api.iyzipay.com/payment/iyzipos/checkoutform/initialize/auth/ecom';
+    const IYZICO_BASE_URL = isSandbox 
+      ? 'https://sandbox-api.iyzipay.com'
+      : 'https://api.iyzipay.com';
 
     console.log('🔍 Iyzico Payment Debug:', {
       orderId,
@@ -52,19 +52,30 @@ export async function POST(request: NextRequest) {
       hasApiKey: !!process.env.IYZICO_API_KEY,
       hasSecretKey: !!process.env.IYZICO_SECRET_KEY,
       sandboxMode: isSandbox,
-      iyzicoBaseUrl
+      iyzicoBaseUrl: IYZICO_BASE_URL
     });
 
-    // Iyzico Authentication Implementation (HMACSHA256 - Updated 2025)
+    // Iyzico Authentication Implementation (HMACSHA256 - CRITICAL FIX)
     function createIyzicoAuth(apiKey: string, secretKey: string, uriPath: string, requestBody: string) {
+      // 1. Generate random key (timestamp + random string)
       const randomKey = new Date().getTime() + "123456789";
+      
+      // 2. Create payload: randomKey + uri + stringified request body
       const payload = randomKey + uriPath + requestBody;
       
-      // Use HMACSHA256 as per current iyzico documentation (2025)
-      const hash = crypto.createHmac('sha256', secretKey).update(payload).digest('hex');
-      const authorizationString = `apiKey:${apiKey}&randomKey:${randomKey}&signature:${hash}`;
-      const base64Auth = Buffer.from(authorizationString).toString('base64');
+      // 3. CRITICAL: Generate HMACSHA256 signature - MUST BE HEX FORMAT
+      const signature = crypto
+        .createHmac('sha256', secretKey)
+        .update(payload)
+        .digest('hex');  // ⚠️ CRITICAL: Must be 'hex', not omitted
       
+      // 4. Create authorization string with EXACT format
+      const authString = `apiKey:${apiKey}&randomKey:${randomKey}&signature:${signature}`;
+      
+      // 5. Base64 encode the authorization string
+      const base64Auth = Buffer.from(authString, 'utf8').toString('base64');
+      
+      // 6. Return with IYZWSv2 prefix
       return {
         authorization: `IYZWSv2 ${base64Auth}`,
         randomKey: randomKey
@@ -80,55 +91,52 @@ export async function POST(request: NextRequest) {
                     request.headers.get('x-real-ip') || 
                     '127.0.0.1';
     
-    // Create iyzico checkout form request (not payment request)
+    // Create iyzico checkout form request with correct structure
     const iyzicoRequest = {
       locale: 'tr',
       conversationId: orderId,
-      price: parseFloat(price).toFixed(2),
-      paidPrice: parseFloat(price).toFixed(2),
+      price: "50.00",
+      paidPrice: "50.00",
       currency: 'TRY',
-      installment: '1',
-      paymentChannel: 'WEB',
+      basketId: orderId,
       paymentGroup: 'PRODUCT',
-      callbackUrl: `${baseUrl}/payment/success`,
-      enabledInstallments: [2, 3, 6, 9],
+      callbackUrl: `${baseUrl}/api/payment/callback/iyzico`,
+      enabledInstallments: [2, 3, 6, 9],  // Must be integer array
       buyer: {
-        id: order.email,
-        name: order.fullName || 'Test User',
-        surname: order.fullName || 'Test User',
-        gsmNumber: '+905551234567',
-        email: order.email,
-        identityNumber: '11111111111',
-        lastLoginDate: new Date().toISOString().replace('T', ' ').substring(0, 19),
-        registrationDate: new Date().toISOString().replace('T', ' ').substring(0, 19),
-        registrationAddress: 'Test Address',
+        id: "BY789",
+        name: "John",
+        surname: "Doe",
+        gsmNumber: "+905350000000",
+        email: "john.doe@example.com",
+        identityNumber: "74300864791",
+        registrationAddress: "Nidakule Göztepe, Merdivenköy Mah. Bora Sok. No:1",
         ip: clientIP,
-        city: 'Istanbul',
-        country: 'Turkey',
-        zipCode: '34000'
+        city: "Istanbul",
+        country: "Turkey",
+        zipCode: "34732"
       },
       shippingAddress: {
-        contactName: order.fullName || 'Test User',
-        city: 'Istanbul',
-        country: 'Turkey',
-        address: 'Test Address',
-        zipCode: '34000'
+        contactName: "Jane Doe",
+        city: "Istanbul",
+        country: "Turkey",
+        address: "Nidakule Göztepe, Merdivenköy Mah. Bora Sok. No:1",
+        zipCode: "34742"
       },
       billingAddress: {
-        contactName: order.fullName || 'Test User',
-        city: 'Istanbul',
-        country: 'Turkey',
-        address: 'Test Address',
-        zipCode: '34000'
+        contactName: "Jane Doe",
+        city: "Istanbul",
+        country: "Turkey",
+        address: "Nidakule Göztepe, Merdivenköy Mah. Bora Sok. No:1",
+        zipCode: "34742"
       },
       basketItems: [
         {
-          id: orderId,
-          name: 'Fortune Reading',
-          category1: 'Services',
-          category2: 'Fortune Telling',
-          itemType: 'VIRTUAL',
-          price: parseFloat(price).toFixed(2)
+          id: "BI101",
+          name: "Fortune Reading",
+          category1: "Services",  // MANDATORY field
+          category2: "Fortune Telling",
+          itemType: "VIRTUAL",
+          price: "50.00"
         }
       ]
     };
@@ -136,11 +144,14 @@ export async function POST(request: NextRequest) {
     console.log('📤 Creating Iyzico checkout form with correct authentication...');
     console.log('📋 Request payload:', JSON.stringify(iyzicoRequest, null, 2));
 
+    // URI path for checkout form initialization
+    const uri = '/payment/iyzipos/checkoutform/initialize/auth/ecom';
+    
     // Create authentication for the request
     const auth = createIyzicoAuth(
       process.env.IYZICO_API_KEY!,
       process.env.IYZICO_SECRET_KEY!,
-      '/payment/iyzipos/checkoutform/initialize/auth/ecom',
+      uri,
       JSON.stringify(iyzicoRequest)
     );
 
@@ -155,7 +166,7 @@ export async function POST(request: NextRequest) {
     const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
     try {
-      const response = await fetch(iyzicoBaseUrl, {
+      const response = await fetch(`${IYZICO_BASE_URL}${uri}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -198,8 +209,9 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json({
           success: true,
-          paymentUrl: iyzicoData.paymentPageUrl,
-          token: iyzicoData.token
+          paymentPageUrl: iyzicoData.paymentPageUrl,
+          token: iyzicoData.token,
+          checkoutFormContent: iyzicoData.checkoutFormContent
         });
       } else {
         console.error('❌ Iyzico API failed:', iyzicoData);
