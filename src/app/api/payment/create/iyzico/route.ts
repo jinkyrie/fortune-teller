@@ -8,6 +8,23 @@ export async function POST(request: NextRequest) {
     const { orderId, paymentMethod } = await request.json();
     console.log('📋 Request data:', { orderId, paymentMethod });
 
+    // Check credentials are loaded correctly
+    console.log('🔑 Credentials Check:', {
+      hasApiKey: !!process.env.IYZICO_API_KEY,
+      hasSecretKey: !!process.env.IYZICO_SECRET_KEY,
+      apiKeyLength: process.env.IYZICO_API_KEY?.length,
+      secretKeyLength: process.env.IYZICO_SECRET_KEY?.length,
+      apiKeyPrefix: process.env.IYZICO_API_KEY?.substring(0, 15),
+      secretKeyPrefix: process.env.IYZICO_SECRET_KEY?.substring(0, 15)
+    });
+
+    // DETAILED DEBUGGING - Exact values for troubleshooting
+    console.log('📊 EXACT VALUES FOR DEBUGGING:');
+    console.log('🔑 API Key Length:', process.env.IYZICO_API_KEY?.length);
+    console.log('🔑 Secret Key Length:', process.env.IYZICO_SECRET_KEY?.length);
+    console.log('🔑 API Key:', process.env.IYZICO_API_KEY);
+    console.log('🔑 Secret Key:', process.env.IYZICO_SECRET_KEY);
+
     if (!orderId) {
       console.log('❌ Missing orderId');
       return NextResponse.json(
@@ -55,27 +72,46 @@ export async function POST(request: NextRequest) {
       iyzicoBaseUrl: IYZICO_BASE_URL
     });
 
-    // Iyzico Authentication Implementation (HMACSHA256 - CRITICAL FIX)
-    function createIyzicoAuth(apiKey: string, secretKey: string, uriPath: string, requestBody: string) {
-      // 1. Generate random key (timestamp + random string)
-      const randomKey = new Date().getTime() + "123456789";
+    // Iyzico Authentication Implementation (COMPLETE WORKING VERSION)
+    function generateIyzicoAuth(apiKey: string, secretKey: string, requestBody: any, uri: string) {
+      // 1. Generate random key (MUST be string)
+      const randomKey = new Date().getTime().toString() + "123456789";
       
-      // 2. Create payload: randomKey + uri + stringified request body
-      const payload = randomKey + uriPath + requestBody;
+      // 2. Stringify request body EXACTLY as it will be sent (no spaces, no formatting)
+      const requestBodyString = JSON.stringify(requestBody);
       
-      // 3. CRITICAL: Generate HMACSHA256 signature - MUST BE HEX FORMAT
+      // 3. Create payload: randomKey + uri + requestBodyString
+      const payload = randomKey + uri + requestBodyString;
+      
+      // 4. Generate HMACSHA256 signature in HEX format
       const signature = crypto
         .createHmac('sha256', secretKey)
-        .update(payload)
-        .digest('hex');  // ⚠️ CRITICAL: Must be 'hex', not omitted
+        .update(payload, 'utf8')
+        .digest('hex');
       
-      // 4. Create authorization string with EXACT format
+      // 5. Create authorization string
       const authString = `apiKey:${apiKey}&randomKey:${randomKey}&signature:${signature}`;
       
-      // 5. Base64 encode the authorization string
+      // 6. Base64 encode
       const base64Auth = Buffer.from(authString, 'utf8').toString('base64');
       
-      // 6. Return with IYZWSv2 prefix
+      console.log('🔐 Auth Debug:', {
+        randomKey,
+        payloadLength: payload.length,
+        signatureLength: signature.length,
+        signature: signature.substring(0, 20) + '...',
+        base64Length: base64Auth.length
+      });
+
+      // DETAILED DEBUGGING - Exact values for troubleshooting
+      console.log('📊 EXACT AUTHENTICATION VALUES:');
+      console.log('🔑 RandomKey:', randomKey);
+      console.log('🔑 URI Path:', uri);
+      console.log('🔑 Payload Length:', payload.length);
+      console.log('🔑 Signature (first 20 chars):', signature.substring(0, 20));
+      console.log('🔑 Full Signature:', signature);
+      console.log('🔑 Base64 Auth Length:', base64Auth.length);
+      
       return {
         authorization: `IYZWSv2 ${base64Auth}`,
         randomKey: randomKey
@@ -91,17 +127,17 @@ export async function POST(request: NextRequest) {
                     request.headers.get('x-real-ip') || 
                     '127.0.0.1';
     
-    // Create iyzico checkout form request with correct structure
-    const iyzicoRequest = {
-      locale: 'tr',
+    // Create request body - MUST be EXACT
+    const requestBody = {
+      locale: "tr",
       conversationId: orderId,
       price: "50.00",
       paidPrice: "50.00",
-      currency: 'TRY',
+      currency: "TRY",
       basketId: orderId,
-      paymentGroup: 'PRODUCT',
+      paymentGroup: "PRODUCT",
       callbackUrl: `${baseUrl}/api/payment/callback/iyzico`,
-      enabledInstallments: [2, 3, 6, 9],  // Must be integer array
+      enabledInstallments: [2, 3, 6, 9],
       buyer: {
         id: "BY789",
         name: "John",
@@ -109,6 +145,8 @@ export async function POST(request: NextRequest) {
         gsmNumber: "+905350000000",
         email: "john.doe@example.com",
         identityNumber: "74300864791",
+        lastLoginDate: "2015-10-05 12:43:35",
+        registrationDate: "2013-04-21 15:12:09",
         registrationAddress: "Nidakule Göztepe, Merdivenköy Mah. Bora Sok. No:1",
         ip: clientIP,
         city: "Istanbul",
@@ -133,7 +171,7 @@ export async function POST(request: NextRequest) {
         {
           id: "BI101",
           name: "Fortune Reading",
-          category1: "Services",  // MANDATORY field
+          category1: "Services",
           category2: "Fortune Telling",
           itemType: "VIRTUAL",
           price: "50.00"
@@ -141,19 +179,33 @@ export async function POST(request: NextRequest) {
       ]
     };
 
-    console.log('📤 Creating Iyzico checkout form with correct authentication...');
-    console.log('📋 Request payload:', JSON.stringify(iyzicoRequest, null, 2));
+    console.log('🚀 Starting iyzico payment for order:', orderId);
 
     // URI path for checkout form initialization
     const uri = '/payment/iyzipos/checkoutform/initialize/auth/ecom';
     
-    // Create authentication for the request
-    const auth = createIyzicoAuth(
+    // DETAILED DEBUGGING - URI and Base URL
+    console.log('📊 EXACT URI VALUES:');
+    console.log('🔑 URI Path:', uri);
+    console.log('🔑 Base URL:', IYZICO_BASE_URL);
+    console.log('🔑 Full URL:', `${IYZICO_BASE_URL}${uri}`);
+    
+    // Generate authentication BEFORE stringifying for sending
+    const auth = generateIyzicoAuth(
       process.env.IYZICO_API_KEY!,
       process.env.IYZICO_SECRET_KEY!,
-      uri,
-      JSON.stringify(iyzicoRequest)
+      requestBody,
+      uri
     );
+
+    // Prepare request body string (must be IDENTICAL to what was used in signature)
+    const requestBodyString = JSON.stringify(requestBody);
+
+    console.log('📤 Request Details:', {
+      url: `${IYZICO_BASE_URL}${uri}`,
+      bodyLength: requestBodyString.length,
+      randomKey: auth.randomKey
+    });
 
     console.log('🔐 Auth details:', {
       hasAuth: !!auth.authorization,
@@ -169,11 +221,11 @@ export async function POST(request: NextRequest) {
       const response = await fetch(`${IYZICO_BASE_URL}${uri}`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': auth.authorization,
-          'x-iyzi-rnd': auth.randomKey.toString()
+          'Content-Type': 'application/json',
+          'x-iyzi-rnd': auth.randomKey
         },
-        body: JSON.stringify(iyzicoRequest),
+        body: requestBodyString,  // Use the EXACT same string
         signal: controller.signal
       });
       
@@ -184,46 +236,27 @@ export async function POST(request: NextRequest) {
       console.log('📊 Iyzico API Response Headers:', Object.fromEntries(response.headers.entries()));
       console.log('📊 Iyzico API Response Body:', responseText);
 
-      let iyzicoData;
-      try {
-        iyzicoData = JSON.parse(responseText);
-        console.log('📊 Iyzico Response Data:', iyzicoData);
-      } catch (parseError) {
-        console.error('❌ Failed to parse Iyzico response:', parseError);
-        return NextResponse.json(
-          { 
-            error: 'Invalid response from payment gateway',
-            details: responseText,
-            status: response.status
-          },
-          { status: 500 }
-        );
-      }
+      const data = await response.json();
+      
+      console.log('📊 Iyzico Response:', {
+        status: data.status,
+        errorCode: data.errorCode,
+        errorMessage: data.errorMessage
+      });
 
-      if (iyzicoData.status === 'success') {
-        console.log('✅ Payment form created successfully!');
-        console.log('🔗 Payment URL:', iyzicoData.paymentPageUrl);
-
-        // Note: Database update removed to avoid Prisma issues
-        // You can add this back once the basic flow works
-
+      if (data.status === 'success') {
         return NextResponse.json({
           success: true,
-          paymentPageUrl: iyzicoData.paymentPageUrl,
-          token: iyzicoData.token,
-          checkoutFormContent: iyzicoData.checkoutFormContent
+          paymentPageUrl: data.paymentPageUrl,
+          token: data.token
         });
       } else {
-        console.error('❌ Iyzico API failed:', iyzicoData);
-        return NextResponse.json(
-          { 
-            error: 'Failed to create payment link',
-            details: iyzicoData.errorMessage || 'Unknown error',
-            errorCode: iyzicoData.errorCode,
-            iyzicoResponse: iyzicoData
-          },
-          { status: 500 }
-        );
+        console.error('❌ Iyzico Error:', data);
+        return NextResponse.json({
+          success: false,
+          error: data.errorMessage,
+          errorCode: data.errorCode
+        }, { status: 400 });
       }
     } catch (fetchError: any) {
       clearTimeout(timeoutId);
