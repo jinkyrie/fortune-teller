@@ -42,7 +42,9 @@ export async function POST(request: NextRequest) {
 
     // Check if we're in sandbox mode
     const isSandbox = process.env.IYZICO_SANDBOX_MODE === 'true' || process.env.NODE_ENV !== 'production';
-    const iyzicoBaseUrl = isSandbox ? 'https://sandbox-api.iyzipay.com' : 'https://api.iyzipay.com';
+    const iyzicoBaseUrl = isSandbox 
+      ? 'https://sandbox-api.iyzipay.com/payment/iyzipos/checkoutform/initialize/auth/ecom'
+      : 'https://api.iyzipay.com/payment/iyzipos/checkoutform/initialize/auth/ecom';
 
     console.log('🔍 Iyzico Payment Debug:', {
       orderId,
@@ -53,13 +55,13 @@ export async function POST(request: NextRequest) {
       iyzicoBaseUrl
     });
 
-    // Iyzico Authentication Implementation (HMAC-SHA1)
+    // Iyzico Authentication Implementation (HMACSHA256 - Updated 2025)
     function createIyzicoAuth(apiKey: string, secretKey: string, uriPath: string, requestBody: string) {
-      const randomKey = new Date().getTime() + Math.random().toString(36).substring(2, 15);
+      const randomKey = new Date().getTime() + "123456789";
       const payload = randomKey + uriPath + requestBody;
       
-      // Use HMAC-SHA1 as per iyzico documentation
-      const hash = crypto.createHmac('sha1', secretKey).update(payload).digest('hex');
+      // Use HMACSHA256 as per current iyzico documentation (2025)
+      const hash = crypto.createHmac('sha256', secretKey).update(payload).digest('hex');
       const authorizationString = `apiKey:${apiKey}&randomKey:${randomKey}&signature:${hash}`;
       const base64Auth = Buffer.from(authorizationString).toString('base64');
       
@@ -89,7 +91,7 @@ export async function POST(request: NextRequest) {
       paymentChannel: 'WEB',
       paymentGroup: 'PRODUCT',
       callbackUrl: `${baseUrl}/payment/success`,
-      enabledInstallments: ['2', '3', '6', '9'],
+      enabledInstallments: [2, 3, 6, 9],
       buyer: {
         id: order.email,
         name: order.fullName || 'Test User',
@@ -138,7 +140,7 @@ export async function POST(request: NextRequest) {
     const auth = createIyzicoAuth(
       process.env.IYZICO_API_KEY!,
       process.env.IYZICO_SECRET_KEY!,
-      '/payment/iyzipos/checkoutform/initialize',
+      '/payment/iyzipos/checkoutform/initialize/auth/ecom',
       JSON.stringify(iyzicoRequest)
     );
 
@@ -153,11 +155,12 @@ export async function POST(request: NextRequest) {
     const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
     try {
-      const response = await fetch(`${iyzicoBaseUrl}/payment/iyzipos/checkoutform/initialize`, {
+      const response = await fetch(iyzicoBaseUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': auth.authorization
+          'Authorization': auth.authorization,
+          'x-iyzi-rnd': auth.randomKey.toString()
         },
         body: JSON.stringify(iyzicoRequest),
         signal: controller.signal
@@ -210,7 +213,7 @@ export async function POST(request: NextRequest) {
           { status: 500 }
         );
       }
-    } catch (fetchError) {
+    } catch (fetchError: any) {
       clearTimeout(timeoutId);
       console.error('❌ Fetch error:', fetchError);
       
